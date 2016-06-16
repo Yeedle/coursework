@@ -31,13 +31,15 @@ str(ratings)
 summary(ratings$rating)
 
 # plot distribution of ratings (slide 13)
-
+ggplot(ratings, aes(x=rating)) + geom_histogram()
 
 ####################
 # per-movie stats
 ####################
 
 # aggregate ratings by movie, computing mean and number of ratings
+new_df <- ratings %>% group_by(movie_id) %>% mutate(mean_rating = mean(rating))
+ggplot(new_df, aes(mean_rating)) + geom_density()
 
 # plot distribution of movie popularity (= number of ratings the movie received)
 
