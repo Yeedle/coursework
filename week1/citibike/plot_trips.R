@@ -68,3 +68,4 @@ ggplot(df, aes(tmin, count)) + geom_point()
 # plot the above
 
 # repeat this, but now split the results by day of the week (Monday, Tuesday, ...) or weekday vs. weekend days
+# hint: use the wday() function from the lubridate package
