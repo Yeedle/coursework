@@ -7,6 +7,8 @@ library(dplyr)
 library(ggplot2)
 library(reshape)
 library(scales)
+library(tidyr)
+library(lubridate)
 
 # be picky about white backgrounds on our plots
 theme_set(theme_bw())
@@ -28,6 +30,18 @@ ggplot(trips, aes(ymd)) + geom_bar()
 # plot the number of trips by gender and age
 trips_groups <- trips %>% group_by(gender, birth_year) %>% summarize(count = n())
 ggplot(trips_groups, aes(birth_year, count, color=as.factor(gender))) + geom_point() + xlim(1940, 2000)
+
+# plot the ratio of male to female trips by age
+# hint: use the spread() function to reshape things to make it easier to compute this ratio
+
+########################################
+# plot weather data
+########################################
+# plot the minimum temperature over each day
+
+# plot the minimum temperature and maximum temperature over each day
+# hint: try using the gather() function for this to reshape things before plotting
+
 ########################################
 # plot trip and weather data
 ########################################
@@ -37,6 +51,7 @@ trips_with_weather <- inner_join(trips, weather, by="ymd")
 
 # plot the minimum temperature over each day
 ggplot(weather, aes(ymd, tmin)) + geom_point()
+
 # plot the number of trips as a function of the minimum temperature, where each point represents a day
 df <- group_by(trips_with_weather, ymd, tmin) %>% summarize(count = n()) 
 ggplot(df, aes(tmin, count)) + geom_point()
@@ -46,3 +61,10 @@ ggplot(df, aes(tmin, count)) + geom_point()
 # you'll need to decide what constitutes "substantial precipitation" and create a new T/F column to indicate this
 
 # add a smoothed fit on top of the previous plot, using geom_smooth
+
+# compute the average number of trips and standard deviation in number of trips by hour of the day
+# hint: use the hour() function from the lubridate package
+
+# plot the above
+
+# repeat this, but now split the results by day of the week (Monday, Tuesday, ...) or weekday vs. weekend days
