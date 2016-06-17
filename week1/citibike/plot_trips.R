@@ -36,8 +36,10 @@ ggplot(trips_groups, aes(birth_year, count, color=as.factor(gender))) + geom_poi
 trips_with_weather <- inner_join(trips, weather, by="ymd")
 
 # plot the minimum temperature over each day
-
+ggplot(weather, aes(ymd, tmin)) + geom_point()
 # plot the number of trips as a function of the minimum temperature, where each point represents a day
+df <- group_by(trips_with_weather, ymd, tmin) %>% summarize(count = n()) 
+ggplot(df, aes(tmin, count)) + geom_point()
 # you'll need to summarize the trips and join to the weather data to do this
 
 # repeat this, splitting results by whether there was substantial precipitation or not
