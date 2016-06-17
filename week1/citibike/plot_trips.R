@@ -20,13 +20,14 @@ load('trips.RData')
 ########################################
 
 # plot the distribution of trip times across all rides
-
+ggplot(trips, aes(tripduration)) + geom_histogram() + xlim(0, 3600*3)
 # plot the distribution of trip times by rider type
-
+ggplot(trips, aes(tripduration, color=usertype), position="identity") + geom_density() + xlim(0, 3600) 
 # plot the number of trips over each day
-
+ggplot(trips, aes(ymd)) + geom_bar()
 # plot the number of trips by gender and age
-
+trips_groups <- trips %>% group_by(gender, birth_year) %>% summarize(count = n())
+ggplot(trips_groups, aes(birth_year, count, color=as.factor(gender))) + geom_point() + xlim(1940, 2000)
 ########################################
 # plot trip and weather data
 ########################################
