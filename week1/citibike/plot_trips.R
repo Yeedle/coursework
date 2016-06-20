@@ -3,12 +3,6 @@
 ########################################
 
 # load some packages that we'll need
-library(dplyr)
-library(ggplot2)
-library(reshape)
-library(scales)
-library(tidyr)
-library(lubridate)
 
 # be picky about white backgrounds on our plots
 theme_set(theme_bw())
@@ -44,7 +38,7 @@ ggplot(weather, aes(ymd, tmin)) + geom_point()
 # plot the minimum temperature and maximum temperature over each day
 # hint: try using the gather() function for this to reshape things before plotting
 weather_minmax <- gather(weather, "key", "val", tmin, tmax)
-ggplot(weather_minmax, aes(ymd,val)) + geom_point()
+ggplot(weather_minmax, aes(ymd,val, color=key)) + geom_point()
 ggplot(weather_minmax, aes(ymd,val)) + geom_ribbon(aes(ymin= val -10, ymax= val +10))
 ########################################
 # plot trip and weather data
@@ -68,8 +62,11 @@ ggplot(df, aes(tmin, count, color=rainy)) + geom_point() +geom_smooth()
 # compute the average number of trips and standard deviation in number of trips by hour of the day
 # hint: use the hour() function from the lubridate package
 library(lubridate)
-trip_hours <- trips %>% mutate(hour = hour(starttime)) %>% group_by(ymd, hour) %>% summarize(num_trip=n()) %>% group_by(hour) %>% summarize(mean_trips=mean(num_trip), sd = sd(num_trip))
+trip_hours <- trips %>% mutate(hour = hour(starttime)) %>% group_by(ymd, hour, gender) %>% summarize(num_trip=n()) %>% group_by(hour, gender) %>% summarize(mean_trips=mean(num_trip), sd = sd(num_trip))
 # plot the above
-ggplot(trip_hours, aes(hour, mean_trips)) + geom_point() + geom_errorbar(aes(ymin=mean_trips-sd, ymax =mean_trips+sd))
+ggplot(trip_hours, aes(hour, mean_trips)) + geom_line() + geom_errorbar(aes(ymin=mean_trips-sd, ymax =mean_trips+sd))
 # repeat this, but now split the results by day of the week (Monday, Tuesday, ...) or weekday vs. weekend days
 # hint: use the wday() function from the lubridate package
+trips_by_day <- trips %>% mutate(day = wday(starttime)) %>% group_by(ymd, day) %>% summarize(num_trip=n())
+trip_by_day <- trips_by_day %>% group_by(day) %>% summarize(mean_trips=mean(num_trip), sd = sd(num_trip))
+ggplot(trip_by_day, aes(day, mean_trips, color=gender)) + geom_line()
