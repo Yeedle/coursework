@@ -28,7 +28,7 @@ This exercise looks at the relationship between price and sales for supermarket 
     1. Plot ``logmove`` (the log of quantity sold) vs. ``log price``. 
     2. Color each point by ``brand``. What do insights can you derive that were not apparent before?
 4.  Estimating the relationship.
-    1. Do a regression of ``logmove`` on ``log price``. How well does the model fit? What is the elasticity (the coefficient on log price), and does it make sense?
+    1. Do a regression of ``logmove`` on ``log price``. How well does the model fit? What is the elasticity (the coefficient on log price), and does it make sense? See [here](http://www.salemmarafi.com/business/price-elasticity/) for some background on elasticity and below for a tip on plotting the fitted model.
     2. Now add in an intercept term for each brand (by adding ``brand`` to the [regression formula](http://faculty.chicagobooth.edu/richard.hahn/teaching/formulanotation.pdf)). How do the results change? How should we interpret these coefficients?
     3. Now add interaction terms to allow the elasticities to differ by brand, by including a ``brand:log price`` term in the regression formula. Note the estimate coefficients will "offset" the base estimates. What is the insights we get from this regression? What is the elasticity for each firm? Do the elasticities make sense?
 5. Impact of "featuring in store".
@@ -36,3 +36,21 @@ This exercise looks at the relationship between price and sales for supermarket 
     2. How should we incorporate the "featured in store" variable into our regression? Start with an additive formulation (e.g. feature impacts sales, but not through price).
     3. Now run a model where features can impact sales and price sensitivity.
     4. Now run a model where each brand can have a different impact of being featured and a different impact on price sensitivity. Produce a table of elasticties for each brand, one row for "featured" and one row for "not featured" (you need 6 estimates).
+
+``` 
+	# create some fake data
+	x <- runif(300)
+	z <- sample(1:3, 300, replace=T)
+	df <- data.frame(x=x, z=as.factor(z), y=2*x - 3*z + x*z + rnorm(300))
+
+	# fit the model
+    model <- lm(y ~ x + z, data=df)
+    
+	# add the predicted values to the data frame
+    df$predicted <- fitted(model)
+    
+    # plot the observations as points and predictions as a line
+    ggplot(df, aes(x=x, y=y, color=z)) +
+      geom_point() +
+      geom_line(aes(x=x, y=predicted, color=z))
+```
