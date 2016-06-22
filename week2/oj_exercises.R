@@ -34,22 +34,23 @@ ggplot(oj, aes(logprice, logmove, color=brand)) + geom_point()
 #     What is the elasticity (the coefficient on log price), and does it make sense?
 model <- lm(oj$logmove ~ oj$logprice)
 summary(model)
+ggplot(oj, aes(logprice, logmove)) +  geom_point() + geom_smooth(method="lm") + facet_wrap(~ brand) 
 
 # ii) Now add in an intercept term for each brand (by adding brand to the regression formula). 
 #     How do the results change? 
 #     How should we interpret these coefficients?
-model <- lm(oj$logmove ~ oj$logprice + oj$brand)
+model <- lm(oj$logmove ~ oj$logprice + oj$brand -1)
 summary(model)
-
+model$coefficients
 # iii)  Now add interaction terms to allow the elasticities to differ by brand, by including a brand:log price term in the regression formula. 
 #       Note the estimate coefficients will "offset" the base estimates. 
 #       What is the insights we get from this regression? 
 #       What is the elasticity for each firm? 
 #       Do the elasticities make sense?
-model <- lm(oj$logmove ~ oj$logprice + oj$brand + oj$brand:oj$logprice)
+model <- lm(oj$logmove ~ oj$brand*oj$logprice -1)
 summary(model)
 
-### 5) Impact of "featuring in store"
+ ### 5) Impact of "featuring in store"
 # i) Which brand is featured the most? Make a plot to show this.
 oj_by_brand <- oj %>% filter(feat ==1) %>% group_by(brand)
 ggplot(oj_by_brand, aes(brand)) + geom_bar()
@@ -63,7 +64,7 @@ model <- lm(oj$logmove ~ oj$logprice + oj$feat)
 summary(model)
 
 # iv) Now run a model where each brand can have a different impact of being featured and a different impact on price sensitivity. 
-model <- lm(oj$logmove ~ oj$brand:oj$logprice + oj$brand:oj$feat)
+model <- lm(oj$logmove ~ oj$brand*log(oj$price)*oj$feat)
 summary(model)
 
 # ..  Produce a table of elasticties for each brand, one row for "featured" and one row for "not featured" (you need 6 estimates).
