@@ -53,7 +53,6 @@ coef(model)
 #An easy way to do this is with the sample command. 
 #The following will randomly select 20% of the rows in our data frame: 
 indexes <- sample(1:nrow(oj), size=0.2*nrow(oj))
-nrow(oj)
 #Now let’s use this index to create a training and a test set, try: 
 OJtest <- oj[indexes, ]
 Ojtrain <- oj[-indexes, ]
@@ -62,10 +61,23 @@ Ojtrain <- oj[-indexes, ]
 #Now let’s run the very simple model logmove ~ log(price) + brand on the training data.
 model <- lm(logmove ~ log(price) + brand, Ojtrain)
 summary(model)
-#Use LM on this model and report the R-squared.
+#Use LM on this model and report the R-squared. A: 0.3967
 #Use predict(model, Ojtest) to predict log sales for the test set.
 OJtest$predicted <- predict(model, OJtest)
-#Compute cor(predicted_sales,logmove)^2 on the test set. This is our "honest R-squared". How does it compare to the value in (a)?
+#Compute cor(predicted_sales,logmove)^2 on the test set. This is our "honest R-squared". 
+cor(OJtest$predicted, OJtest$logmove)^2
+#How does it compare to the value in (a)?
+#A: 0.3836859
 #Now let’s run better models.
-#Run our "previous favorite" logmove ~ brand*log(price)*feat on the training data. Use LM to get regular R-squared. Now, follow the procedure in (3) to compute "honest R-squared". What is it? How do they compare?
-#Now add in all the demographics. What is the regular R-squared on training data? What is the honest R-squared on the test set?
+#Run our "previous favorite" logmove ~ brand*log(price)*feat on the training data. 
+#Use LM to get regular R-squared. 
+model <- lm(logmove ~ brand*log(price)*feat, Ojtrain)
+summary(model)
+# Now, follow the procedure in (3) to compute "honest R-squared". What is it? How do they compare?
+OJtest$predicted <- predict(model, OJtest)
+cor(OJtest$predicted, OJtest$logmove)^2
+#Now add in all the demographics. What is the regular R-squared on training data? A: 0.6402
+#What is the honest R-squared on the test set? A: 0.6098247
+model <- lm(logmove ~ log(price)*brand*feat*AGE60*EDUC*ETHNIC*INCOME*HHLARGE, Ojtrain)
+OJtest$predicted <- predict(model, OJtest)
+cor(OJtest$predicted, OJtest$logmove)^2
