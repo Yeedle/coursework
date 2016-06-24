@@ -56,9 +56,11 @@ oj_by_brand <- oj %>% filter(feat ==1) %>% group_by(brand)
 ggplot(oj_by_brand, aes(brand)) + geom_bar()
 # ii) How should we incorporate the "featured in store" variable into our regression? 
 #     Start with an additive formulation (e.g. feature impacts sales, but not through price).
-model <- lm(oj$logmove ~ oj$feat)
+model <- lm(logmove ~ as.factor(feat)*log(price), oj)
 summary(model)
-ggplot(oj, aes(logprice, logmove))
+oj$predicted <- fitted(model)
+View(oj)
+ggplot(oj, aes(log(price), logmove, color=as.factor(feat))) + geom_point() + geom_line(aes(log(price), predicted, color=as.factor(feat)))
 # iii) Now run a model where features can impact sales and price sensitivity.
 model <- lm(oj$logmove ~ oj$logprice + oj$feat)
 summary(model)
