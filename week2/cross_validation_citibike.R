@@ -1,6 +1,7 @@
 library(dplyr)
 library(ggplot2)
 library(lubridate)
+library(glmnet)
 
 load("../week1/citibike/trips.RData")
 # In this assignment we'll predict number of trips per day as a function of the weather on that day.
@@ -10,9 +11,27 @@ is_weekend <- function(day)
   if (day == 1 | day == 7) TRUE
   else FALSE
 }
-is_weekend(c(1,2,3))
+
+weather_level <-function(temp)
+{
+  if (temp < 4.5)
+    "cold"
+  else if (temp <= 7)
+    "fine"
+  else
+    "hot"
+}
+
 is_weekend <- Vectorize(is_weekend)
-trips_per_day <- trips %>% group_by(ymd) %>% summarize(count = n()) %>% inner_join(weather, by="ymd") %>% mutate(wday = wday(ymd, label = T), weekend = is_weekend(wday(ymd)))
+weather_level <- Vectorize(weather_level)
+holidays = as.Date(c("2014-01-01", "2014-01-20", "2014-02-17", "2014-05-26", "2014-07-04", "2014-09-01", "2014-10-13", "2014-11-11", "2014-11-27", "2014-12-25"))
+trips_per_day <- trips %>% 
+  group_by(ymd) %>% summarize(count = n()) %>% 
+  inner_join(weather, by="ymd") %>% 
+  mutate(wday = wday(ymd, label = T), weekend = is_weekend(wday(ymd)), holiday = ymd %in% holidays, tavg = (tmin+tmax)/2, level = weather_level(tmax))
+  
+
+
 
 #2) Split the data into a randomly selected training and test set, as in the above exercise, with 80% of the data for training the model and 20% for testing.
 indexes <- sample(1:nrow(trips_per_day), size=0.2*nrow(trips_per_day))
@@ -65,13 +84,26 @@ ggplot(trips_test, aes(tmin, count)) + geom_point() + geom_line(aes(tmin, predic
 ## DAY 5: ##
 r2andRmse <- function(train, test, model)
 {
-  trips_train$predicted <- fitted(model)
-  trips_test$predicted <- predict(model, trips_test)
+  train$predicted <- fitted(model)
+  test$predicted <- predict(model, test)
   cat(paste("r^2 for train data:\t" , cor(train$predicted, train$count)^2),
       paste("r^2 for test data:\t" , cor(test$predicted, test$count)^2),
       paste("RMSE for train data:\t", sqrt(mean((train$count-train$predicted)^2))),
       paste("RMSE for test data:\t", sqrt(mean((test$count-test$predicted)^2))),
       sep = "\n")
+}
+
+r2andRmsevector <- function(train, test, model)
+{
+  train$predicted <- fitted(model)
+  test$predicted <- predict(model, test)
+  name <- as.character(model$call[2])
+  train_r2 <- cor(train$predicted, train$count)^2
+  test_r2 <- cor(test$predicted, test$count)^2
+  train_rmse <- sqrt(mean((train$count-train$predicted)^2))
+  test_rmse <-sqrt(mean((test$count-test$predicted)^2))
+  v <- c(name, train_r2, test_r2, train_rmse, test_rmse)
+  return(v)
 }
 
 plotmodel <- function(data, model)
@@ -93,47 +125,40 @@ plotyear <- function(data, model)
 #     Second as a plot where the x-axis is the predicted value and the y-axis is the actual value, with each point representing one day.
 #     Inspect the model when you're done to figure out what the highly predictive features are, and see if you can prune away any negligble features that don't matter much.
 
-# number of rides on tmax
-model <- lm(count ~ tmax, trips_train)
-r2andRmse(trips_train, trips_test, model)
-plotyear(trips_n_weather, model)
-plotmodel(trips_n_weather, model)
 
-#number of rides on tmin
-model <- lm(count ~ tmin, trips_train)
-r2andRmse(trips_train, trips_test, model)
-plotyear(trips_n_weather, model)
-plotmodel(trips_n_weather, model)
-
-# number of rides by day of year
-test_cor <- vector()
-train_cor <- vector()
-for (k in 1:20)
+## cross validation
+r2 <- function(model, data)
 {
-  model <- lm(count ~ poly(ymd, k), trips_train)
-  trips_train$predicted_count <-fitted(model) 
-  trips_test$predicted_count <- predict(model, trips_test)
-  train_cor[k] <- cor(trips_train$predicted_count, trips_train$count) 
-  test_cor[k] <- cor(trips_test$predicted_count, trips_test$count) 
+    data$predicted <- predict(model, data)
+    r2 <- cor(data$predicted, data$count)^2
+    return(r2)
 }
-df <- data_frame(k=1:20, train = train_cor^2, test = test_cor^2)
-ggplot(df, aes(as.factor(k), train)) + geom_point(color="red") + geom_line(aes(k, train), color="red") + geom_point(aes(y=test), color="blue") + geom_line(aes(k, test), color="blue")
-r2andRmse(trips_train, trips_test, model)
-plotyear(trips_per_day, model)
-plotmodel(trips_per_day, model)
 
+RMSE <- function(model, data)
+{
+  data$predicted <- predict(model, data)
+  RMSE <- sqrt(mean((data$count-data$predicted)^2))
+  return(RMSE)
+}
 
-#number of rides on percipitation
-model <- lm(count ~ prcp, trips_train)
-r2andRmse(trips_train, trips_test, model)
-#number of rides on tmin+prcp
-model <- lm(count ~ tmin*prcp, trips_train)
-r2andRmse(trips_train, trips_test, model)
-
-# number of rides on tmax*prcp
-model <- lm(count ~ tmax*prcp, trips_train)
-r2andRmse(trips_train, trips_test, model)
-
-model <- lm(count ~ weekend, trips_train)
-r2andRmse(trips_train, trips_test, model)
-plotyear()
+cross_validate <- function(call, data, k=5)
+{
+  
+  data <- data[sample(nrow(data)),] # shuffle the data
+  RMSE <- c()
+  R2 <- c()
+  n <- nrow(data)
+  n_div_k <- (1/k)*n
+  for (i in 1:k)
+  {
+    ndx <- (1+((i-1)*n_div_5)):(i*n_div_5)
+    test <- data[ndx, ]
+    train <- data[-ndx,]
+    model <- lm(call, train)
+    R2[i] <- r2(model, test)
+    RMSE[i] <- RMSE(model, test)
+  }
+  return(c(avg_r2=mean(R2), avg_rmse=mean(RMSE), se=sd(RMSE)/sqrt(k)))
+}
+formula <- as.formula(count ~ poly(tavg, 4)  + snwd+ log(snow + 0.01) + snow:weekend + snwd:weekend + log(prcp + 0.01) + weekend + holiday + weekend:log(prcp + 0.01) + holiday:log(prcp + 0.01) + tavg:log(prcp + 0.01))    
+cross_validate(formula, trips_per_day)
