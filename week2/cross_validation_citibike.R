@@ -143,7 +143,7 @@ RMSE <- function(model, data)
 
 cross_validate <- function(call, data, k=5)
 {
-  
+  set.seed(42)
   data <- data[sample(nrow(data)),] # shuffle the data
   RMSE <- c()
   R2 <- c()
@@ -151,14 +151,15 @@ cross_validate <- function(call, data, k=5)
   n_div_k <- (1/k)*n
   for (i in 1:k)
   {
-    ndx <- (1+((i-1)*n_div_5)):(i*n_div_5)
+    ndx <- (1+((i-1)*n_div_k)):(i*n_div_k)
     test <- data[ndx, ]
     train <- data[-ndx,]
     model <- lm(call, train)
+    print(summary(model))
     R2[i] <- r2(model, test)
     RMSE[i] <- RMSE(model, test)
   }
   return(c(avg_r2=mean(R2), avg_rmse=mean(RMSE), se=sd(RMSE)/sqrt(k)))
 }
-formula <- as.formula(count ~ poly(tavg, 4)  + snwd+ log(snow + 0.01) + snow:weekend + snwd:weekend + log(prcp + 0.01) + weekend + holiday + weekend:log(prcp + 0.01) + holiday:log(prcp + 0.01) + tavg:log(prcp + 0.01))    
+formula <- as.formula(count ~ poly(tavg, 4)  + snwd + holiday + weekend + log(prcp + 0.01) + holiday:log(prcp+0.01))    
 cross_validate(formula, trips_per_day)
