@@ -3,7 +3,7 @@ library(lubridate)
 
 load("trips15.RData")
 source("feature_functions.R")
-load("model.R")
+load("model.Rdata")
 
 weather <- weather15 %>% mutate(wday = wday(ymd, label = T), 
          weekend = is_weekend(wday(ymd)), 
@@ -12,3 +12,4 @@ weather <- weather15 %>% mutate(wday = wday(ymd, label = T),
 
 
 weather$predicted <- predict(model, weather)
+
