@@ -143,7 +143,6 @@ RMSE <- function(model, data)
 
 cross_validate <- function(call, data, k=5)
 {
-  set.seed(42)
   data <- data[sample(nrow(data)),] # shuffle the data
   RMSE <- c()
   R2 <- c()
@@ -163,3 +162,5 @@ cross_validate <- function(call, data, k=5)
 }
 formula <- as.formula(count ~ poly(tavg, 4)  + snwd + holiday + weekend + log(prcp + 0.01) + holiday:log(prcp+0.01))    
 cross_validate(formula, trips_per_day)
+model <- lm(formula, trips_per_day)
+summary(model)

@@ -16,6 +16,7 @@ trips_per_day <- trips %>%
          tavg = (tmin+tmax)/2)
 
 formula <- as.formula(count ~ poly(tavg, 4)  + snwd + holiday + weekend + log(prcp + 0.01) + holiday:log(prcp+0.01))    
-
 model <- lm(formula, trips_per_day)
+trips_per_day$predicted <- predict(model, trips_per_day)
+ggplot(trips_per_day, aes(ymd, predicted))  +geom_point()
 save(model, file="model.Rdata")
