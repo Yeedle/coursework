@@ -1,5 +1,6 @@
 library(dplyr)
 library(lubridate)
+library(ggplot2)
 load("trips15.RData")
 source("feature_functions.R")
 load("model.Rdata")
@@ -23,7 +24,7 @@ df <- weather15 %>% mutate(wday = wday(ymd, label = T), weekend = is_weekend(wda
  
 
 # predict...
-df$predicted <- predict(model, df)
-sqrt(mean((df$count-df$predicted)^2))
-ggplot(df, aes(ymd, predicted)) + geom_point()
-ggplot(trips_per_day15, aes(predicted, count)) + geom_point()
+trips_per_day15$predicted <- predict(model, trips_per_day15)
+sqrt(mean((trips_per_day15$count-trips_per_day15$predicted)^2))
+ggplot(trips_per_day15, aes(ymd, count)) + geom_point() + geom_line(aes(ymd, predicted))
+ggplot(trips_per_day15, aes(predicted, count)) + geom_point() + geom_abline(slope = 1)
