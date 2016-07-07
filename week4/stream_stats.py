@@ -34,9 +34,5 @@ if __name__ == '__main__':
 
     # loop over each group and output the group's key and
 
-    s = ""
     for key in stats:
-        s += "%s\t%d\t%.2f\t%.2f\t%d\n" % (key, min(stats[key]), median(stats[key]), mean(stats[key]), max(stats[key]))
-    object = open("output.tsv", "w")
-    object.write(s)
-    object.close()
+        print "%s\t%d\t%.2f\t%.2f\t%d\n" % (key, min(stats[key]), median(stats[key]), mean(stats[key]), max(stats[key]))
